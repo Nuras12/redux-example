@@ -1,6 +1,7 @@
 import React from 'react';
 import { postApi } from '../services_v1/index'
-import axios, { AxiosRequestConfig, AxiosError } from 'axios'
+import axios, { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios'
+import style from '../Styles/Posts';
 
 
 export const Posts = () => {
@@ -28,33 +29,20 @@ export const Posts = () => {
 
 
     const getPosts = () => {
-        postApi
-              .get<IPost[]>("/posts", {
-                headers: {
-                  "Content-Type": "application/json"
-                },
-              })
-              .then(response => {
-                setPosts(response.data);
-                setLoading(false);
-              })
-              .catch(ex => {
-                const error =
-                ex.response.status === 404
-                  ? "Resource not found"
-                  : "An unexpected error has occurred";
-                setError(error);
-                setLoading(false);
-              });
 
-        axios.interceptors.response.use((config: any) => {
-          console.log("CONFIG", config)
-          return config;
-        }, (error: AxiosError) => {
-          console.log('ERROR', error)
-          return Promise.reject(error)
-        })
-          
+      const options = { headers: { "Content-Type": "application/json" } };
+
+      const responseHandler = (response: AxiosResponse) => {
+        setPosts(response.data);
+        setLoading(false);
+      }
+
+      const errorHandler = (ex: AxiosError) => {
+        setError(ex.response?.status === 404 ? "Resource not found" : "An unexpected error has occurred");
+        setLoading(false);
+      }
+
+      postApi.get<IPost[]>("/posts", options).then(responseHandler).catch(errorHandler);  
     }
 
 
@@ -79,45 +67,8 @@ export const Posts = () => {
 
 
   
-    React.useEffect(() => {
-      getPosts()
-      }, []);
+    React.useEffect(() => getPosts(), []);
 
-
-      const style = {
-        table: {
-          borderCollapse: "collapse"
-        },
-        tableCell: {
-          border: "1px solid gray",
-          margin: 0,
-          padding: "5px 10px",
-          width: "max-content",
-          minWidth: "150px"
-        },
-        form: {
-          container: {
-            padding: "20px",
-            border: "1px solid #F0F8FF",
-            borderRadius: "15px",
-            width: "max-content",
-            marginBottom: "40px"
-          },
-          inputs: {
-            marginBottom: "5px"
-          },
-          submitBtn: {
-            marginTop: "10px",
-            padding: "10px 15px",
-            border: "none",
-            backgroundColor: "lightseagreen",
-            fontSize: "14px",
-            borderRadius: "5px"
-          }
-        }
-      };
-      
-  
     return (
       <>
           <label>Title:</label>
