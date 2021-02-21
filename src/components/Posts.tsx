@@ -1,8 +1,13 @@
 import React from 'react';
-import { postApi } from '../services_v1/index'
-import axios, { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios'
+import { postApi } from '../services_v1/index';
+import { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
+
+import store from '../store';
+import { addPost, addPosts } from '../actions/action-creators';
+import { randomInteger } from '../utils';
 import style from '../Styles/Posts';
 
+const { dispatch } = store;
 
 export const Posts = () => {
 
@@ -15,25 +20,20 @@ export const Posts = () => {
   
     const defaultProps:IPost[] = [];
   
-    const [posts, setPosts]: [IPost[], (posts: IPost[]) => void] = React.useState(defaultProps);
+    const [posts, setPosts]: [IPost[], (posts: IPost[]) => void] = React.useState(store.getState().post);
     const [loading, setLoading]: [boolean, (loading: boolean) => void] = React.useState<boolean>(true);
     const [error, setError]: [string, (error: string) => void] = React.useState("");
 
     const [title, setTitle]: [string, (title: string) => void] = React.useState("");
     const [body, setBody]: [string, (body: string) => void] = React.useState("");
   
-    function randomInteger(min: number, max: number) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-  
-
-
     const getPosts = () => {
 
       const options = { headers: { "Content-Type": "application/json" } };
 
       const responseHandler = (response: AxiosResponse) => {
-        setPosts(response.data);
+        dispatch(addPosts(response.data));
+        //setPosts(response.data);
         setLoading(false);
       }
 
@@ -46,28 +46,31 @@ export const Posts = () => {
     }
 
 
-    const postData = (userId: Number, title: string, body: string) => {
-      fetch("https://jsonplaceholder.typicode.com/posts", {
+    const postData = async (userId: Number, title: string, body: string) => {
+
+      const options = {
         method: "POST",
-        body: JSON.stringify({
+        body: {
           title: title,
           body: body,
-          userId: userId
-        }),
-        headers: {
-          "Content-type": "application/json; charset=UTF-8"
+          userId: userId  
         }
-      })
-        .then((response) => response.json())
-        .then((json) => {
-          console.log('JSON',json);
-          setPosts([json, ...posts]);
-        });
+      }
+
+      const response = await postApi.post("https://jsonplaceholder.typicode.com/posts", options);
+      const postAction = addPost({...response.data.body, id: response.data.id});
+      if (!posts.find(p => p.id === response.data.id)){
+        dispatch(postAction);
+      }
+      
+      //setPosts([{...response.data.body, ...response.data.id}, ...posts]);
     };
-
-
-  
-    React.useEffect(() => getPosts(), []);
+ 
+    React.useEffect(() => {
+      console.log('object');
+      const unsubscribe = store.subscribe(() => setPosts(store.getState().post));
+      getPosts();
+    }, []);
 
     return (
       <>
