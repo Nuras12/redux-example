@@ -6,7 +6,8 @@ import { stat } from 'fs';
 
 const initialState = {
     data: [],
-    error: null,
+    isLoading: false,
+    error: '',
 };
 
 
@@ -20,7 +21,14 @@ const initialState = {
       },
       ADD_ITEMS: (state, { payload }) => {
             state.data = [ ...state.data, ...payload ]
-        },/*
+        },
+      setIsLoading: (state, {payload}) => {
+        state.isLoading = payload
+      },
+      setError: (state, {payload}) => {
+        state.error = payload;
+      }
+        /*
         setAuthFailed: (state, { payload }: PayloadAction) => {
             state.error = payload
             state.isAuth = false
@@ -30,6 +38,6 @@ const initialState = {
 
 
 export const { actions, reducer } = postSlice;
-
+export const postSelector = (state) => state.posts
 export default combineReducers({ posts: reducer })
   

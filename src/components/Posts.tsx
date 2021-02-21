@@ -3,9 +3,10 @@ import { postApi } from '../services_v1/index';
 import { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
 
 import store from '../store';
-import { actions } from '../reducers';
+import { actions, postSelector } from '../reducers';
 import { randomInteger } from '../utils';
 import style from '../Styles/Posts';
+import { useSelector, useDispatch } from 'react-redux'
 
 const { dispatch } = store;
 
@@ -18,26 +19,24 @@ export const Posts = () => {
       body: string;
     }
   
-    const defaultProps:IPost[] = [];
-    const [posts, setPosts]: [IPost[], (posts: IPost[]) => void] = React.useState([]);
-    const [loading, setLoading]: [boolean, (loading: boolean) => void] = React.useState<boolean>(true);
-    const [error, setError]: [string, (error: string) => void] = React.useState("");
-
+    const { error, data, isLoading } = useSelector(postSelector);
+    console.log(isLoading, 'Data');
     const [title, setTitle]: [string, (title: string) => void] = React.useState("");
     const [body, setBody]: [string, (body: string) => void] = React.useState("");
   
     const getPosts = () => {
+      dispatch(actions.setIsLoading(true))
 
       const options = { headers: { "Content-Type": "application/json" } };
 
       const responseHandler = (response: AxiosResponse) => {
         dispatch(actions.ADD_ITEMS(response.data));
-        setLoading(false);
+        dispatch(actions.setIsLoading(false))
       }
 
       const errorHandler = (ex: AxiosError) => {
-        setError(ex.response?.status === 404 ? "Resource not found" : "An unexpected error has occurred");
-        setLoading(false);
+        dispatch(actions.setError(ex.response?.status === 404 ? "Resource not found" : "An unexpected error has occurred"))
+        dispatch(actions.setIsLoading(false))
       }
 
       postApi.get<IPost[]>("/posts", options).then(responseHandler).catch(errorHandler);  
@@ -59,16 +58,11 @@ export const Posts = () => {
       dispatch(actions.ADD_ITEM({...response.data.body, id: response.data.id}));
     };
  
-    React.useEffect(() => {
-      store.subscribe(() => {
-        console.log('Subscribe', store.getState());
-        setPosts(store.getState().posts.data);
-      });
-      getPosts();
-    }, []);
+    React.useEffect(() => getPosts(), []);
 
     return (
       <>
+      <h1>Is loading status: {isLoading ? "True" : "False"}</h1>
           <label>Title:</label>
           <input
             style={style.form.inputs}
@@ -100,12 +94,16 @@ export const Posts = () => {
             }}
           />
         <ul className="posts">
-          {store.getState().posts.data.map((post) => (
+          {
+          data ?
+          data.map((post) => (
           <li key={post.id}>
             <h3>Post title: {post.title}</h3>
             <p>Post body : {post.body}</p>
           </li>
-        ))}
+        ))
+        : null
+        }
         </ul>
         {error && <p className="error">{error}</p>}
       </>
