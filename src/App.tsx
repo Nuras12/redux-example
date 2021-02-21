@@ -1,4 +1,6 @@
 import React from 'react';
+import { Provider } from 'react-redux'
+
 import logo from './logo.svg';
 import './App.css';
 import axios from 'axios';
@@ -11,7 +13,9 @@ function App() {
 
   return (
     <div className="App">
-      <Posts />
+      <Provider store={store}>  
+        <Posts />
+      </Provider>
     </div>
   );
 }

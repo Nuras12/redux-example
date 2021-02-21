@@ -1,5 +1,10 @@
-//import { createStore } from "@reduxjs/toolkit";
-import { createStore } from 'redux';
-import { firstManager } from '../reducers';
+import reduces from '../reducers';
 
-export default createStore(firstManager);
+
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
+
+
+export default configureStore({
+ reducer: reduces,
+ devTools: true,
+});

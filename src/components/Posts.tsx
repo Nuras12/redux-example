@@ -3,7 +3,7 @@ import { postApi } from '../services_v1/index';
 import { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
 
 import store from '../store';
-import { addPost, addPosts } from '../actions/action-creators';
+import { actions } from '../reducers';
 import { randomInteger } from '../utils';
 import style from '../Styles/Posts';
 
@@ -19,8 +19,7 @@ export const Posts = () => {
     }
   
     const defaultProps:IPost[] = [];
-  
-    const [posts, setPosts]: [IPost[], (posts: IPost[]) => void] = React.useState(store.getState().post);
+    const [posts, setPosts]: [IPost[], (posts: IPost[]) => void] = React.useState([]);
     const [loading, setLoading]: [boolean, (loading: boolean) => void] = React.useState<boolean>(true);
     const [error, setError]: [string, (error: string) => void] = React.useState("");
 
@@ -32,8 +31,7 @@ export const Posts = () => {
       const options = { headers: { "Content-Type": "application/json" } };
 
       const responseHandler = (response: AxiosResponse) => {
-        dispatch(addPosts(response.data));
-        //setPosts(response.data);
+        dispatch(actions.ADD_ITEMS(response.data));
         setLoading(false);
       }
 
@@ -58,17 +56,14 @@ export const Posts = () => {
       }
 
       const response = await postApi.post("https://jsonplaceholder.typicode.com/posts", options);
-      const postAction = addPost({...response.data.body, id: response.data.id});
-      if (!posts.find(p => p.id === response.data.id)){
-        dispatch(postAction);
-      }
-      
-      //setPosts([{...response.data.body, ...response.data.id}, ...posts]);
+      dispatch(actions.ADD_ITEM({...response.data.body, id: response.data.id}));
     };
  
     React.useEffect(() => {
-      console.log('object');
-      const unsubscribe = store.subscribe(() => setPosts(store.getState().post));
+      store.subscribe(() => {
+        console.log('Subscribe', store.getState());
+        setPosts(store.getState().posts.data);
+      });
       getPosts();
     }, []);
 
@@ -105,7 +100,7 @@ export const Posts = () => {
             }}
           />
         <ul className="posts">
-          {posts.map((post) => (
+          {store.getState().posts.data.map((post) => (
           <li key={post.id}>
             <h3>Post title: {post.title}</h3>
             <p>Post body : {post.body}</p>
